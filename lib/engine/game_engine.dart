@@ -126,7 +126,7 @@ class GameEngine {
           fuel: config.power.fuelDays.toDouble()),
       medSupplies: 1,
       scrap: 60,
-      biomass: 0,
+      biomass: 20,
     );
 
     state.run.phase = Phase.summer;

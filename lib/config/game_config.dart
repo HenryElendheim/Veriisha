@@ -65,6 +65,8 @@ class PowerConfig {
   final int reactorOutput; // total power available per day at full fuel
   final int fuelDays; // days of fuel the reactor starts with
   final double biomassToFuelDays; // fuel-days gained per unit of biomass burned
+  final double
+      biofuelDailyCap; // most biomass the converter can process in a day
   final int supplySynthCost; // power to synthesise one medical supply
   final int neutralRoomTemp; // room temperature with heat fully powered
 
@@ -72,6 +74,7 @@ class PowerConfig {
     this.reactorOutput = 100,
     this.fuelDays = 35,
     this.biomassToFuelDays = 0.5,
+    this.biofuelDailyCap = 4,
     this.supplySynthCost = 25,
     this.neutralRoomTemp = 20,
   });
@@ -90,10 +93,11 @@ class FoodConfig {
   const FoodConfig({
     this.foodPerPersonPerDay = 10,
     this.waterPerPersonPerDay = 10,
-    this.greenhouseYieldPerLevel = 22,
+    this.greenhouseYieldPerLevel =
+        42, // a built greenhouse (L1) just about feeds four
     this.forageWinterReturn = 3,
     this.forageSummerReturn = 18,
-    this.dirtyWaterSickChance = 0.15,
+    this.dirtyWaterSickChance = 0.08,
   });
 }
 
@@ -109,8 +113,8 @@ class MedicalConfig {
   const MedicalConfig({
     this.treatBase = 0.40,
     this.treatWithMedic = 1.00,
-    this.sicknessWorsenPerDay = 6,
-    this.contagionChance = 0.25,
+    this.sicknessWorsenPerDay = 4,
+    this.contagionChance = 0.15,
   });
 }
 

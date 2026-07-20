@@ -2,9 +2,11 @@ import '../config/game_config.dart';
 import '../content/events.dart';
 import '../content/sites.dart';
 import '../models/enums.dart';
+import '../models/crew.dart';
 import '../models/world.dart';
 import '../models/run.dart';
 import '../engine/rng.dart';
+import '../engine/result.dart';
 
 // The warning queue. Every crisis becomes visible one to two days before it lands,
 // through an in-world sign. The minimum warning being at least one full day is
@@ -36,7 +38,8 @@ class ThreatSystem {
   /// Land every threat that has reached its day. Applies the damage, honours
   /// mitigations, and returns what landed so the caller can prove each was
   /// telegraphed.
-  static List<LandedThreat> land(RunSave s, GameConfig c) {
+  static List<LandedThreat> land(
+      RunSave s, GameConfig c, int day, List<DeathRecord> deaths) {
     final landed = <LandedThreat>[];
     final remaining = <Threat>[];
     for (final t in s.threats) {
@@ -44,13 +47,30 @@ class ThreatSystem {
         remaining.add(t);
         continue;
       }
-      final line = _apply(s, c, t);
+      final line = _apply(s, c, t, day, deaths);
       landed.add(LandedThreat(t, t.visible, line));
     }
     s.threats
       ..clear()
       ..addAll(remaining);
     return landed;
+  }
+
+  // Take health off a person, and if it is lethal, resolve the death right here
+  // with the true cause - so an avalanche reads as an avalanche on the memorial,
+  // not as a vague illness the next morning.
+  static void _hurt(RunSave s, Crew p, num amount, Cause cause, int day,
+      List<DeathRecord> deaths) {
+    p.stats.health = (p.stats.health - amount).round().clamp(0, 100).toInt();
+    if (p.stats.health <= 0 && p.alive) {
+      p.alive = false;
+      p.able = false;
+      p.conditions
+        ..clear()
+        ..add(Condition.dead);
+      s.memorial.add(MemorialEntry(name: p.name, cause: cause, day: day));
+      deaths.add(DeathRecord(p.name, cause));
+    }
   }
 
   /// Step 8: maybe raise new threats. Anything created here is given a warning of
@@ -60,7 +80,7 @@ class ThreatSystem {
     // Site avalanche chain (Ridge): rare, but total when it comes.
     if (siteDef(s.run.siteId).threat == ThreatType.avalanche &&
         s.run.phase == Phase.winter &&
-        rng.chance(0.04 + progress * 0.04)) {
+        rng.chance(0.015 + progress * 0.03)) {
       _raise(s, c, rng, ThreatType.avalanche, 'ridge-slope',
           'Tremors on the slope. The ceiling is loosening.');
       return;
@@ -124,7 +144,8 @@ class ThreatSystem {
   }
 
   // Apply a landed threat. Mitigations soften it; nothing removes it entirely.
-  static String _apply(RunSave s, GameConfig c, Threat t) {
+  static String _apply(
+      RunSave s, GameConfig c, Threat t, int day, List<DeathRecord> deaths) {
     switch (t.type) {
       case ThreatType.storm:
         final soften = s.isBuilt('shutters') ? 0.4 : 1.0;
@@ -148,12 +169,10 @@ class ThreatSystem {
             (s.resources.food - t.severity * 2).clamp(0, double.infinity);
         return 'Blight took part of the crop.';
       case ThreatType.avalanche:
-        final soften = s.isBuilt('anchors') ? 0.35 : 1.0;
-        for (final p in s.livingAwake) {
-          p.stats.health = (p.stats.health - (t.severity * soften))
-              .round()
-              .clamp(0, 100)
-              .toInt();
+        // Rare, but total. Anchors are the difference between a scare and a burial.
+        final soften = s.isBuilt('anchors') ? 0.3 : 1.0;
+        for (final p in s.livingAwake.toList()) {
+          _hurt(s, p, t.severity * soften, Cause.avalanche, day, deaths);
         }
         return 'The slope came down on the camp.';
       case ThreatType.predator:
@@ -165,11 +184,10 @@ class ThreatSystem {
         if (targets.isEmpty) return 'Predators tested an empty perimeter.';
         // Pick the first able body; deterministic given the ordered crew list.
         final victim = targets.first;
-        final hit = (t.severity * soften).round();
-        victim.stats.health = (victim.stats.health - hit).clamp(0, 100).toInt();
         if (soften > 0.4 && !victim.hasCondition(Condition.injured)) {
           victim.conditions.add(Condition.injured);
         }
+        _hurt(s, victim, t.severity * soften, Cause.predator, day, deaths);
         return 'Predators reached the wall. ${victim.name} was hurt driving them back.';
       case ThreatType.starvation:
         return 'The larder is running dangerously low.';

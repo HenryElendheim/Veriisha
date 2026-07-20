@@ -1,4 +1,5 @@
 import '../config/game_config.dart';
+import '../content/sites.dart';
 import '../models/enums.dart';
 import '../models/run.dart';
 import '../engine/rng.dart';
@@ -13,13 +14,23 @@ class FoodWaterSystem {
   static void produce(RunSave s, GameConfig c) {
     final greenhouse = s.buildingById('greenhouse');
     if (greenhouse != null && greenhouse.built) {
-      s.resources.food += c.food.greenhouseYieldPerLevel * greenhouse.level;
+      // The cave grows crops poorly, so a single greenhouse there will not feed a
+      // full camp - the site's starvation risk, straight out of the config.
+      final yield = c.food.greenhouseYieldPerLevel *
+          greenhouse.level *
+          siteDef(s.run.siteId).greenhouseFactor;
+      s.resources.food += yield;
+      // Crop waste feeds the biofuel converter - this is what keeps fuel alive
+      // across a hundred-day winter.
+      s.resources.biomass += yield * 0.4;
     }
-    // Snowmelt is endless but dirty.
-    s.resources.water.dirty += 40;
-    // The filter cleans a share of it, but only while there is power to run it.
+    // Snowmelt is endless but dirty - plenty for a full camp, if it can be cleaned.
+    s.resources.water.dirty += 60;
+    // The filter cleans nearly all of it, but only while there is power to run it.
+    // A built filter keeps four or five people in clean water; without one they
+    // drink dirty and it becomes a slow bleed of sickness.
     if (s.isBuilt('water_filter') && s.resources.power.output > 0) {
-      final cleaned = s.resources.water.dirty * 0.8;
+      final cleaned = s.resources.water.dirty * 0.9;
       s.resources.water.dirty -= cleaned;
       s.resources.water.clean += cleaned;
     }

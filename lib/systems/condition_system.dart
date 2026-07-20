@@ -55,6 +55,32 @@ class ConditionSystem {
     }
   }
 
+  /// Bodies mend when conditions allow, so a bad week is not a death sentence.
+  /// Frostbite thaws in a warm shelter, injuries knit once health is back up, and
+  /// a quarantine is lifted once the sickness has passed. This is what keeps a run
+  /// from locking into an unrecoverable "nobody able" state.
+  static void recover(RunSave s) {
+    for (final person in s.livingAwake) {
+      if (person.hasCondition(Condition.frostbitten) &&
+          person.stats.warmth >= 55) {
+        person.conditions.remove(Condition.frostbitten);
+      }
+      if (person.hasCondition(Condition.injured) && person.stats.health >= 75) {
+        person.conditions.remove(Condition.injured);
+      }
+      if (person.hasCondition(Condition.quarantined) &&
+          !person.hasCondition(Condition.sick)) {
+        person.conditions.remove(Condition.quarantined);
+      }
+      // A body with nothing wrong reads as healthy again.
+      final negatives =
+          person.conditions.where((cd) => cd != Condition.healthy).toList();
+      if (negatives.isEmpty && !person.hasCondition(Condition.healthy)) {
+        person.conditions.add(Condition.healthy);
+      }
+    }
+  }
+
   /// Anyone whose health has hit zero dies now. Returns the deaths so the caller
   /// can write the memorial and digest. Crew deaths resolve before the wreck
   /// death so the day's mortality is deterministic and the two never race.

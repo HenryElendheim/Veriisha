@@ -5,6 +5,7 @@ import '../models/run.dart';
 import '../systems/food_water_system.dart';
 import '../systems/needs_system.dart';
 import '../systems/condition_system.dart';
+import '../systems/power_system.dart';
 import '../systems/threat_system.dart';
 import '../systems/creature_system.dart';
 import '../systems/wreck_system.dart';
@@ -35,8 +36,9 @@ class DayResolver {
     // 3. Empty needs turn into lost health.
     NeedsSystem.applyDamage(s, c);
 
-    // 4. Untreated conditions worsen and can spread.
+    // 4. Untreated conditions worsen and can spread, then bodies that can mend do.
     ConditionSystem.progress(s, c, rng);
+    ConditionSystem.recover(s);
 
     // 5. Crew deaths from stats and conditions - resolved BEFORE the wreck death so
     //    the day's mortality is deterministic and the two never race.
@@ -57,11 +59,16 @@ class DayResolver {
     //    landed threat must have been visible already - if one is not, the
     //    telegraph guarantee has broken.
     ThreatSystem.advance(s);
-    final landed = ThreatSystem.land(s, c);
+    final deathsBefore = digest.deaths.length;
+    final landed = ThreatSystem.land(s, c, day, digest.deaths);
     for (final l in landed) {
       digest.lines.add(l.line);
       assert(l.wasVisible,
           'Telegraph guarantee broken: a ${l.threat.type.name} landed unseen.');
+    }
+    // Name anyone a threat killed directly, so the digest and memorial agree.
+    for (final d in digest.deaths.skip(deathsBefore)) {
+      digest.lines.add('${d.name} died - ${d.cause.name}.');
     }
 
     // 8. New troubles are rolled, and the creatures press at the wall. Anything
@@ -75,13 +82,18 @@ class DayResolver {
     digest.newTelegraphs.addAll(signs);
     digest.lines.addAll(signs);
 
-    // 10. The loan clock ticks - a day up, or a day of the debt coming due.
+    // 10. The reactor burns the day's fuel, and a built converter tops it back up
+    //     from biomass. Done after warmth was read for the day, so today's cold
+    //     reflects today's power, not tomorrow's.
+    PowerSystem.burnDailyFuel(s, c);
+
+    // 11. The loan clock ticks - a day up, or a day of the debt coming due.
     ActionEconomy.tickLoan(s, c);
 
-    // 11. Standing orders carry out their work and count down.
+    // 12. Standing orders carry out their work and count down.
     _progressStandingOrders(s);
 
-    // 12. Advance the day and check for a phase change or the end of the run.
+    // 13. Advance the day and check for a phase change or the end of the run.
     _advance(s, c, digest);
 
     return digest;

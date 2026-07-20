@@ -49,7 +49,7 @@ void main() {
           expect(t.visible, isTrue,
               reason: 'a ${t.type.name} on the ${site.name} landed unseen');
         }
-        ThreatSystem.land(s, c);
+        ThreatSystem.land(s, c, day, <DeathRecord>[]);
         ThreatSystem.spawnEvents(s, c, rng);
         CreatureSystem.dailyPressure(s, c, rng);
         ThreatSystem.updateTelegraphs(s, c);

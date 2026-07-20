@@ -59,10 +59,19 @@ class PowerSystem {
     return outside + (neutral - outside) * heatSatisfaction(s, c);
   }
 
-  /// Burn the day's fuel. Called once at day-end.
+  /// Burn the day's fuel, then let a built converter top it back up from biomass.
+  /// This is why the greenhouse and the converter together are the winter engine:
+  /// crop waste becomes fuel, and fuel is heat. Called once at day-end.
   static void burnDailyFuel(RunSave s, GameConfig c) {
     s.resources.power.fuel -= dailyFuelBurn(s, c);
     if (s.resources.power.fuel < 0) s.resources.power.fuel = 0;
+    if (s.isBuilt('biofuel_converter') && s.resources.biomass > 0) {
+      final processed = s.resources.biomass < c.power.biofuelDailyCap
+          ? s.resources.biomass
+          : c.power.biofuelDailyCap;
+      s.resources.biomass -= processed;
+      s.resources.power.fuel += processed * c.power.biomassToFuelDays;
+    }
     s.resources.power.output = availableOutput(s, c);
   }
 

@@ -11,6 +11,8 @@ class SiteDef {
   final List<String> mustBuy; // building ids this site really needs
   final double
       heatRetention; // multiplier on how long reactor fuel effectively lasts
+  final double
+      greenhouseFactor; // how well crops grow here - the cave is dim, so food is tight
   final String character;
 
   const SiteDef({
@@ -20,6 +22,7 @@ class SiteDef {
     required this.riskShape,
     required this.mustBuy,
     required this.heatRetention,
+    this.greenhouseFactor = 1.0,
     required this.character,
   });
 }
@@ -52,6 +55,8 @@ const Map<SiteId, SiteDef> kSites = {
     riskShape: 'Rising cost. Warmest camp, most likely to starve.',
     mustBuy: ['greenhouse', 'food_cache'],
     heatRetention: 1.4,
+    greenhouseFactor:
+        0.7, // dim under the rock - one greenhouse will not feed a full camp
     character: 'Warmest camp, most likely to starve',
   ),
 };
