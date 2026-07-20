@@ -1,0 +1,14 @@
+# Dart / package tooling
+.dart_tool/
+.packages
+pubspec.lock
+build/
+
+# Local save files written by the sim harness
+*.save.json
+/saves/
+
+# Editor noise
+.idea/
+.vscode/
+*.iml

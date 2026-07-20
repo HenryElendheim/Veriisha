@@ -1,0 +1,18 @@
+name: veriisha
+description: >-
+  Veriisha - a turn-based survival game engine. Pure Dart, headless, no UI
+  dependencies, so the whole simulation runs and tests in a console.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.6.0
+
+# The engine stays pure Dart on purpose -> it runs headless now and drops into a
+# Flutter UI later with no rewrite. Keep the flutter dependency out of here.
+dependencies:
+  path: ^1.9.0
+
+dev_dependencies:
+  test: ^1.25.0
+  lints: ^5.0.0
