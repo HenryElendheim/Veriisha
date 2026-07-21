@@ -6,7 +6,7 @@ publish_to: none
 version: 0.1.0
 
 environment:
-  sdk: ^3.6.0
+  sdk: ">=3.5.0 <4.0.0"
 
 # The engine stays pure Dart on purpose -> it runs headless now and drops into a
 # Flutter UI later with no rewrite. Keep the flutter dependency out of here.
