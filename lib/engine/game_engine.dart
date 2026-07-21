@@ -225,6 +225,36 @@ class GameEngine {
         return const ActionResult.fail('No converter, or no biomass to burn.');
       });
 
+  /// Teach a role to someone else - spend a day passing on a skill so the
+  /// knowledge survives the person. The teacher must hold the role and be able;
+  /// the student learns it for good.
+  ActionResult teach(String teacherId, String studentId, Role role) =>
+      _spend(1, () {
+        final teacher = state.crewById(teacherId);
+        final student = state.crewById(studentId);
+        if (teacher == null || student == null) {
+          return const ActionResult.fail('No such colonist.');
+        }
+        if (teacher.id == student.id) {
+          return const ActionResult.fail('You cannot teach yourself.');
+        }
+        if (!teacher.able || !teacher.hasRole(role)) {
+          return ActionResult.fail(
+              '${teacher.name} cannot teach ${role.name}.');
+        }
+        if (!student.awake || !student.alive) {
+          return const ActionResult.fail(
+              'The student must be awake and alive.');
+        }
+        if (student.hasRole(role)) {
+          return ActionResult.fail(
+              '${student.name} already knows ${role.name}.');
+        }
+        student.roles.add(role);
+        return ActionResult.success(
+            '${teacher.name} taught ${student.name} to be a ${role.name}. The skill outlives them now.');
+      });
+
   /// Take the loan. Not an action itself - it changes the economy. Gated behind
   /// biotic adaptation, and not re-takeable while running or owed.
   ActionResult takeLoan() {

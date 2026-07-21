@@ -62,7 +62,7 @@ class StandingOrder {
 class Crew {
   final String id;
   final String name;
-  final List<Role> roles;
+  final List<Role> roles; // growable - teaching can add a role over a run
   final Rarity rarity;
   final List<Trait> traits;
 
@@ -79,7 +79,7 @@ class Crew {
   Crew({
     required this.id,
     required this.name,
-    required this.roles,
+    required List<Role> roles,
     this.rarity = Rarity.common,
     List<Trait>? traits,
     this.awake = false,
@@ -90,9 +90,12 @@ class Crew {
     this.assignedTo,
     this.standingOrder,
     this.daysAwake = 0,
-  })  : traits = traits ?? const [],
+  })  : // Copy the lists so a caller's const literal never blocks a later change
+        // (teaching adds a role; recovery edits conditions).
+        roles = List.of(roles),
+        traits = List.of(traits ?? const []),
         stats = stats ?? Stats(),
-        conditions = conditions ?? [Condition.healthy];
+        conditions = List.of(conditions ?? const [Condition.healthy]);
 
   bool get isDead => !alive || conditions.contains(Condition.dead);
   bool hasRole(Role r) => roles.contains(r);

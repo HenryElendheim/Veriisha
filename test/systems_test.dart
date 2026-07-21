@@ -89,6 +89,28 @@ void main() {
         reason: 'hard should end an idle run sooner than easy');
   });
 
+  test('teaching passes a role on, so knowledge survives the person', () {
+    final e = GameEngine.newRun(seed: 1);
+    e.chooseCharacter('rusher'); // an engineer
+    e.chooseSite(SiteId.ridge);
+    // A medic joins the camp, awake and able.
+    final medic = ablePerson('med')..roles.add(Role.medic);
+    medic.roles.remove(Role.engineer);
+    e.state.crew.add(medic);
+    e.state.actionsToday.total = 5; // room to act
+
+    final student = e.state.crewById('rusher')!;
+    expect(student.hasRole(Role.medic), isFalse);
+
+    final r = e.teach('med', 'rusher', Role.medic);
+    expect(r.ok, isTrue);
+    expect(student.hasRole(Role.medic), isTrue);
+
+    // You cannot teach a role you do not hold.
+    final bad = e.teach('rusher', 'med', Role.botanist);
+    expect(bad.ok, isFalse);
+  });
+
   test('an avalanche death is named an avalanche, not a vague illness', () {
     final victim = ablePerson('v')..stats.health = 5;
     final s = RunSave(
