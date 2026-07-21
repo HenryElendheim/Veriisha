@@ -17,6 +17,7 @@ import '../systems/creature_system.dart';
 import '../systems/power_system.dart';
 import '../systems/ending_system.dart';
 import '../systems/unlock_system.dart';
+import '../serialization/json_codec.dart';
 import 'action_economy.dart';
 import 'day_resolver.dart';
 import 'rng.dart';
@@ -144,6 +145,32 @@ class GameEngine {
     state.actionsToday
       ..total = ActionEconomy.computePool(state, config)
       ..spent = 0;
+    // A fresh day - the previous day is committed, so its actions can no longer
+    // be undone.
+    _undoStack.clear();
+  }
+
+  // --- undo (before the day is committed) ---
+
+  // Each entry is the full state and RNG cursor captured just before a costing
+  // action ran, so undo rewinds the world AND the random stream - an undone
+  // forage or treatment replays exactly as if it never happened.
+  final List<_Snapshot> _undoStack = [];
+
+  /// Can the last action be taken back? True while there is an uncommitted action
+  /// this day.
+  bool get canUndo => _undoStack.isNotEmpty;
+
+  /// Undo the last costing action taken today. Free actions and the day itself
+  /// are never on the stack.
+  ActionResult undo() {
+    if (_undoStack.isEmpty) {
+      return const ActionResult.fail('Nothing to undo.');
+    }
+    final snap = _undoStack.removeLast();
+    state = SaveCodec.decodeRun(snap.stateJson);
+    _rng = SeededRng.fromState(snap.rngState);
+    return const ActionResult.success('Took the last action back.');
   }
 
   // --- actions (verbs cost, nouns are free) ---
@@ -155,8 +182,13 @@ class GameEngine {
     if (state.actionsToday.remaining < cost) {
       return const ActionResult.fail('Not enough actions left today.');
     }
+    // Capture the world before the action, so it can be taken back cleanly.
+    final snapshot = _Snapshot(SaveCodec.encodeRun(state), _rng.state);
     final result = body();
-    if (result.ok) state.actionsToday.spent += cost;
+    if (result.ok) {
+      state.actionsToday.spent += cost;
+      _undoStack.add(snapshot);
+    }
     return result;
   }
 
@@ -400,4 +432,11 @@ class GameEngine {
 
   /// The ending outcome, for the ending screen and the count line.
   EndingOutcome endingOutcome() => EndingSystem.resolve(state);
+}
+
+// The world and the RNG cursor, captured before an action so undo can rewind both.
+class _Snapshot {
+  final String stateJson;
+  final int rngState;
+  const _Snapshot(this.stateJson, this.rngState);
 }

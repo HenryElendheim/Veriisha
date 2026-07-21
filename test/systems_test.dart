@@ -135,6 +135,34 @@ void main() {
     expect(bad.ok, isFalse);
   });
 
+  test('undo takes back the last action and rewinds the random stream', () {
+    final e = GameEngine.newRun(seed: 77);
+    e.chooseCharacter('rusher');
+    e.chooseSite(SiteId.ridge);
+    e.state.actionsToday.total = 5; // room for a couple of actions
+
+    expect(e.canUndo, isFalse);
+    final foodBefore = e.state.resources.food;
+
+    // Forage once - food goes up, an action is spent, and it can be undone.
+    e.forage();
+    final foodAfterFirst = e.state.resources.food;
+    expect(foodAfterFirst, greaterThan(foodBefore));
+    expect(e.state.actionsToday.spent, 1);
+    expect(e.canUndo, isTrue);
+
+    // Undo - the food and the spent action are both taken back.
+    e.undo();
+    expect(e.state.resources.food, foodBefore);
+    expect(e.state.actionsToday.spent, 0);
+    expect(e.canUndo, isFalse);
+
+    // Forage again from the rewound RNG - the exact same return, proving the
+    // random stream was rewound, not just the world.
+    e.forage();
+    expect(e.state.resources.food, foodAfterFirst);
+  });
+
   test('an avalanche death is named an avalanche, not a vague illness', () {
     final victim = ablePerson('v')..stats.health = 5;
     final s = RunSave(
