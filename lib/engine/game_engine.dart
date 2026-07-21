@@ -180,7 +180,8 @@ class GameEngine {
       });
 
   ActionResult scavenge() => _spend(1, () {
-        state.resources.scrap += 12;
+        // A smelter turns wreck salvage into more usable scrap per trip.
+        state.resources.scrap += state.isBuilt('smelter') ? 20 : 12;
         return const ActionResult.success('Scavenged the wreck for scrap.');
       });
 

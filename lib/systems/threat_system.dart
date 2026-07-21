@@ -137,6 +137,8 @@ class ThreatSystem {
       maxLead += 1;
     }
     if (s.isBuilt('sensor_post')) maxLead += 1;
+    // A crew member standing watch spots trouble a little further out.
+    if (s.hasStandingOrder(StandingTask.standWatch)) maxLead += 1;
     final lead = rng.nextRange(c.threat.warningMinDays, maxLead);
     final base = kBaseSeverity[type] ?? 8;
     final severity = severityOverride ?? base * (1 + winterProgress(s));
@@ -179,8 +181,10 @@ class ThreatSystem {
             .clamp(0, double.infinity);
         return 'A fuel line leaked overnight.';
       case ThreatType.cropBlight:
-        s.resources.food =
-            (s.resources.food - t.severity * 2).clamp(0, double.infinity);
+        // A food cache buffers the loss - protected stores ride out the blight.
+        final soften = s.isBuilt('food_cache') ? 0.5 : 1.0;
+        s.resources.food = (s.resources.food - t.severity * 2 * soften)
+            .clamp(0, double.infinity);
         return 'Blight took part of the crop.';
       case ThreatType.avalanche:
         // Rare, but total. Anchors are the difference between a scare and a burial.
@@ -194,6 +198,8 @@ class ThreatSystem {
         var soften = 1.0;
         if (s.isBuilt('perimeter_wall')) soften *= 0.5;
         if (s.isBuilt('arms_rack')) soften *= 0.6;
+        // Someone standing at the wall under orders drives them back harder.
+        if (s.hasStandingOrder(StandingTask.holdWall)) soften *= 0.7;
         final targets = s.livingAwake.toList();
         if (targets.isEmpty) return 'Predators tested an empty perimeter.';
         // Pick the first able body; deterministic given the ordered crew list.

@@ -1,6 +1,7 @@
 import '../config/game_config.dart';
 import '../content/sites.dart';
 import '../models/enums.dart';
+import '../models/crew.dart';
 import '../models/run.dart';
 import '../engine/rng.dart';
 
@@ -16,9 +17,12 @@ class FoodWaterSystem {
     if (greenhouse != null && greenhouse.built) {
       // The cave grows crops poorly, so a single greenhouse there will not feed a
       // full camp - the site's starvation risk, straight out of the config.
+      // Someone tending the crop under a standing order lifts the yield.
+      final tended = s.hasStandingOrder(StandingTask.tendCrop) ? 1.2 : 1.0;
       final yield = c.food.greenhouseYieldPerLevel *
           greenhouse.level *
-          siteDef(s.run.siteId).greenhouseFactor;
+          siteDef(s.run.siteId).greenhouseFactor *
+          tended;
       s.resources.food += yield;
       // Crop waste feeds the biofuel converter - this is what keeps fuel alive
       // across a hundred-day winter.

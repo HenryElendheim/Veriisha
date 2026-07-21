@@ -3,6 +3,7 @@ import 'package:veriisha/veriisha.dart';
 import 'package:veriisha/systems/condition_system.dart';
 import 'package:veriisha/systems/power_system.dart';
 import 'package:veriisha/systems/threat_system.dart';
+import 'package:veriisha/systems/food_water_system.dart';
 
 // The refinements that keep a run honest: bodies recover, the biofuel loop keeps
 // the reactor alive, and a threat death is named for the threat that caused it.
@@ -87,6 +88,29 @@ void main() {
     final hard = idleRunLength(Difficulty.hard);
     expect(hard, lessThan(easy),
         reason: 'hard should end an idle run sooner than easy');
+  });
+
+  test('standing orders have live effect - tending the crop lifts the yield',
+      () {
+    RunSave camp({bool tend = false}) {
+      final tender = ablePerson('p');
+      if (tend) {
+        tender.standingOrder =
+            StandingOrder(task: StandingTask.tendCrop, daysRemaining: 5);
+      }
+      return RunSave(
+        run: RunMeta(seed: 1, phase: Phase.winter, siteId: SiteId.ridge),
+        crew: [tender],
+        buildings: [Building(id: 'greenhouse', built: true, level: 1)],
+        resources: Resources(),
+      );
+    }
+
+    final plain = camp();
+    FoodWaterSystem.produce(plain, c);
+    final tended = camp(tend: true);
+    FoodWaterSystem.produce(tended, c);
+    expect(tended.resources.food, greaterThan(plain.resources.food));
   });
 
   test('teaching passes a role on, so knowledge survives the person', () {

@@ -232,6 +232,11 @@ class RunSave {
   /// Everyone awake and alive, able or not.
   Iterable<Crew> get livingAwake => crew.where((c) => c.awake && c.alive);
 
+  /// Is an able body currently carrying out this standing order? Systems read
+  /// this live, so an order like holding the wall or tending the crop has effect.
+  bool hasStandingOrder(StandingTask task) =>
+      crew.any((c) => c.able && c.standingOrder?.task == task);
+
   Crew? crewById(String id) {
     for (final c in crew) {
       if (c.id == id) return c;
