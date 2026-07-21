@@ -14,6 +14,7 @@ dependencies:
   # headless. The app just depends on it and draws the interface.
   veriisha:
     path: ../
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:

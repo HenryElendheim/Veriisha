@@ -16,14 +16,30 @@ class VeriishaApp extends StatefulWidget {
 }
 
 class _VeriishaAppState extends State<VeriishaApp> {
+  final SettingsStore _store = SettingsStore();
   AppSettings _settings = const AppSettings();
   bool _splashDone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load saved accessibility choices. Until they arrive, the dark defaults
+    // stand - and the one-second splash covers the load.
+    _store.load().then((loaded) {
+      if (mounted) setState(() => _settings = loaded);
+    });
+  }
+
+  void _apply(AppSettings next) {
+    setState(() => _settings = next);
+    _store.save(next); // persist so the choice survives the next launch
+  }
 
   @override
   Widget build(BuildContext context) {
     return SettingsScope(
       settings: _settings,
-      onChanged: (next) => setState(() => _settings = next),
+      onChanged: _apply,
       child: MaterialApp(
         title: kAppName,
         debugShowCheckedModeBanner: false,

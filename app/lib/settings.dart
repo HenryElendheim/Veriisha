@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // App-wide identity and the accessibility settings that shape how everything is
 // drawn. Kept small and passed down through an inherited widget, so no extra
@@ -39,6 +40,34 @@ class AppSettings {
         fontScale: fontScale ?? this.fontScale,
         reduceMotion: reduceMotion ?? this.reduceMotion,
       );
+}
+
+/// Loads and saves the settings so a player's accessibility choices survive
+/// between launches. Backed by shared_preferences, which is test-safe via
+/// `SharedPreferences.setMockInitialValues`.
+class SettingsStore {
+  static const _darkMode = 'darkMode';
+  static const _highContrast = 'highContrast';
+  static const _fontScale = 'fontScale';
+  static const _reduceMotion = 'reduceMotion';
+
+  Future<AppSettings> load() async {
+    final p = await SharedPreferences.getInstance();
+    return AppSettings(
+      darkMode: p.getBool(_darkMode) ?? true,
+      highContrast: p.getBool(_highContrast) ?? false,
+      fontScale: p.getDouble(_fontScale) ?? 1.0,
+      reduceMotion: p.getBool(_reduceMotion) ?? false,
+    );
+  }
+
+  Future<void> save(AppSettings s) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(_darkMode, s.darkMode);
+    await p.setBool(_highContrast, s.highContrast);
+    await p.setDouble(_fontScale, s.fontScale);
+    await p.setBool(_reduceMotion, s.reduceMotion);
+  }
 }
 
 /// Exposes the current settings and a way to change them to the whole widget

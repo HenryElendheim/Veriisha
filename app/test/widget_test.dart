@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:veriisha_app/app.dart';
 import 'package:veriisha_app/settings.dart';
@@ -7,6 +8,19 @@ import 'package:veriisha_app/settings.dart';
 // menu opens with the accessibility controls and the version.
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  test('settings persist across a reload', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = SettingsStore();
+    await store.save(const AppSettings(highContrast: true, fontScale: 1.4, reduceMotion: true));
+    final loaded = await store.load();
+    expect(loaded.highContrast, isTrue);
+    expect(loaded.fontScale, 1.4);
+    expect(loaded.reduceMotion, isTrue);
+    expect(loaded.darkMode, isTrue); // default holds
+  });
+
   testWidgets('splash shows Elendheim, then the title appears', (tester) async {
     await tester.pumpWidget(const VeriishaApp());
     expect(find.text('Elendheim'), findsOneWidget);
