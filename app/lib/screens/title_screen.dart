@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../settings.dart';
+import 'new_run_screen.dart';
 import 'settings_screen.dart';
 
 // The title screen. The app's name lives here, so nothing else needs to repeat
@@ -31,8 +32,8 @@ class TitleScreen extends StatelessWidget {
                 const SizedBox(height: 48),
                 _MenuButton(
                   label: 'New Run',
-                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('The game screens are the next build.')),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const NewRunScreen()),
                   ),
                 ),
                 const SizedBox(height: 12),

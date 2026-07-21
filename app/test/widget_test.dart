@@ -53,6 +53,34 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('a new run reaches the run screen and actions drive it', (tester) async {
+    await tester.pumpWidget(const VeriishaApp());
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    // Title -> New Run -> choose a site.
+    await tester.tap(find.text('New Run'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Choose a site'));
+    await tester.pumpAndSettle();
+
+    // Site select -> Cave -> the run screen.
+    expect(find.text('Cave'), findsOneWidget);
+    await tester.tap(find.text('Cave'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('End day'), findsOneWidget);
+    expect(find.text('Forage'), findsOneWidget);
+    expect(find.text('Hunger'), findsWidgets); // the crew lane bars
+
+    // Spend the day's action, then end the day - the run carries on.
+    await tester.tap(find.text('Forage'));
+    await tester.pump();
+    await tester.tap(find.text('End day'));
+    await tester.pump();
+    expect(find.text('End day'), findsOneWidget);
+  });
+
   testWidgets('reduce motion is wired through the settings', (tester) async {
     await tester.pumpWidget(const VeriishaApp());
     await tester.pump(const Duration(seconds: 1));
