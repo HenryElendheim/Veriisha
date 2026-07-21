@@ -107,15 +107,15 @@ String? _summerAction(GameEngine e) {
     if (r.ok) return r.message;
   }
 
-  // Survival first, and each essential only to level one before moving on - food
-  // and fuel are both mandatory for a hundred-day winter, so a working greenhouse
-  // and a converter come before extra greenhouse yield. Each entry is a building
-  // and the level to reach before the next thing is touched.
+  // Survival first - a greenhouse and a converter both come before the site's
+  // defence, and the filter after. A dim-greenhouse site (the cave) runs a small
+  // food deficit that gets covered by foraging in winter, not by a second level
+  // that would crowd out the converter.
   final plan = <(String, int)>[
     ('greenhouse', 1),
     ('biofuel_converter', 1),
-    // The site's own defence comes before the filter: a total avalanche or a
-    // predator breach kills faster than the filter's slow bleed of illness.
+    // A total avalanche or a predator breach kills faster than the filter's slow
+    // bleed of illness, so defence comes before the filter.
     ...siteDef(s.run.siteId).mustBuy.map((id) => (id, 1)),
     ('water_filter', 1),
     ('observatory', 1),

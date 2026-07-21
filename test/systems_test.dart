@@ -66,6 +66,29 @@ void main() {
     expect(s.resources.biomass, 100); // no converter, biomass untouched
   });
 
+  test(
+      'difficulty bites end to end - an idle crew lasts longer on easy than hard',
+      () {
+    // Play a run doing nothing at all, and see how many days pass before it ends.
+    // Harder difficulty means faster decay, so an idle crew should fall sooner.
+    int idleRunLength(Difficulty difficulty) {
+      final e = GameEngine.newRun(seed: 555, difficulty: difficulty);
+      e.chooseCharacter('rusher');
+      e.chooseSite(SiteId.ridge);
+      var days = 0;
+      while (e.phase != Phase.ending && days < 400) {
+        days++;
+        e.endDay();
+      }
+      return days;
+    }
+
+    final easy = idleRunLength(Difficulty.easy);
+    final hard = idleRunLength(Difficulty.hard);
+    expect(hard, lessThan(easy),
+        reason: 'hard should end an idle run sooner than easy');
+  });
+
   test('an avalanche death is named an avalanche, not a vague illness', () {
     final victim = ablePerson('v')..stats.health = 5;
     final s = RunSave(

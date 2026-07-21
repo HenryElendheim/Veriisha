@@ -77,12 +77,23 @@ class ThreatSystem {
   /// at least warningMinDays, so nothing can ever land on the day it is born.
   static void spawnEvents(RunSave s, GameConfig c, SeededRng rng) {
     final progress = winterProgress(s);
+    final siteThreat = siteDef(s.run.siteId).threat;
     // Site avalanche chain (Ridge): rare, but total when it comes.
-    if (siteDef(s.run.siteId).threat == ThreatType.avalanche &&
+    if (siteThreat == ThreatType.avalanche &&
         s.run.phase == Phase.winter &&
         rng.chance(0.015 + progress * 0.03)) {
       _raise(s, c, rng, ThreatType.avalanche, 'ridge-slope',
           'Tremors on the slope. The ceiling is loosening.');
+      return;
+    }
+    // Site starvation chain (Cave): the rising cost. As the cold deepens it
+    // reaches the dim crop, and blights come more often and bite harder - the
+    // camp that was warm and safe starts losing its food.
+    if (siteThreat == ThreatType.starvation &&
+        s.run.phase == Phase.winter &&
+        rng.chance(0.05 + progress * 0.14)) {
+      _raise(s, c, rng, ThreatType.cropBlight, 'cave-blight',
+          'The cold is reaching the crop. The yield is falling.');
       return;
     }
     // Generic weather and equipment troubles.
@@ -136,6 +147,9 @@ class ThreatSystem {
   static String _signFor(Threat t) {
     for (final e in kEvents) {
       if (e.id == t.source) return e.sign;
+    }
+    if (t.source == 'cave-blight') {
+      return 'The cold is reaching the crop. The yield is falling.';
     }
     if (t.type == ThreatType.avalanche) {
       return 'Tremors on the slope. The ceiling is loosening.';

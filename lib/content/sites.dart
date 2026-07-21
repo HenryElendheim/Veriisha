@@ -56,7 +56,7 @@ const Map<SiteId, SiteDef> kSites = {
     mustBuy: ['greenhouse', 'food_cache'],
     heatRetention: 1.4,
     greenhouseFactor:
-        0.7, // dim under the rock - one greenhouse will not feed a full camp
+        0.9, // dim under the rock - one greenhouse will not feed a full camp
     character: 'Warmest camp, most likely to starve',
   ),
 };
