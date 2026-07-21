@@ -234,6 +234,16 @@ class _ActionBar extends StatelessWidget {
         if (sick.isNotEmpty)
           _ActionButton('Treat', () => run((e) => e.treat(sick.first.id))),
         _ActionButton('Synthesize', () => run((e) => e.synthesize())),
+        // Pacing: skip forward while orders hold, stopping on anything notable.
+        _ActionButton('Advance 5 days', () {
+          final digest = controller.advanceDays(5);
+          final msg = digest.stopReason != null
+              ? 'Stopped after day ${digest.toDay}: ${digest.stopReason}.'
+              : 'Advanced to day ${digest.toDay}.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg), duration: const Duration(milliseconds: 1600)),
+          );
+        }),
       ],
     );
   }

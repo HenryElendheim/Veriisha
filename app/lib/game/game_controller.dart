@@ -45,6 +45,14 @@ class GameController extends ChangeNotifier {
     return digest;
   }
 
+  /// Skip forward up to [days], stopping on anything worth a look, then redraw.
+  /// This is the pacing the design requires - a long winter is not all clicks.
+  DayDigest advanceDays(int days) {
+    final digest = engine.advanceDays(days);
+    notifyListeners();
+    return digest;
+  }
+
   /// Take back the last action, then redraw.
   void undo() {
     engine.undo();
